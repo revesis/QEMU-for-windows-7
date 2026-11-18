@@ -38,6 +38,7 @@ cp -v $SYSROOT/libgobject-2.0-0.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libgmodule-2.0-0.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libgio-2.0-0.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libintl-8.dll /dist/ 2>/dev/null || true
+cp -v $SYSROOT/iconv.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libpcre-1.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libpcre2-8-0.dll /dist/ 2>/dev/null || true
 cp -v $SYSROOT/libffi-*.dll /dist/ 2>/dev/null || true

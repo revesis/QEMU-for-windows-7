@@ -841,16 +841,14 @@ pvg = not_found
 emulator_link_args = []
 midl = not_found
 widl = not_found
-pathcch = not_found
-synchronization = not_found
+shlwapi = not_found
 host_dsosuf = '.so'
 if host_os == 'windows'
   midl = find_program('midl', required: false)
   widl = find_program('widl', required: false)
 
   # MinGW uses lowercase for library names
-  pathcch = cc.find_library('pathcch', required: true)
-  synchronization = cc.find_library('synchronization', required: true)
+  shlwapi = cc.find_library('shlwapi', required: true)
   socket = cc.find_library('ws2_32', required: true)
   winmm = cc.find_library('winmm', required: true)
 

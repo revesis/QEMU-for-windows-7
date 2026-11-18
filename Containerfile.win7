@@ -29,5 +29,7 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     curl \
     && dnf clean all
 
-# Install GLib 2.66.8 MinGW RPM from Fedora Koji (last version natively supporting Windows 7)
-RUN rpm -ivh --nodeps https://kojipkgs.fedoraproject.org/packages/mingw-glib2/2.66.8/1.fc33/noarch/mingw64-glib2-2.66.8-1.fc33.noarch.rpm
+# Install GLib 2.66.8 and libffi 3.1 MinGW RPMs from Fedora Koji (last versions supporting Windows 7)
+RUN rpm -Uvh --nodeps --oldpackage --replacefiles --replacepkgs \
+    https://kojipkgs.fedoraproject.org/packages/mingw-glib2/2.66.8/1.fc33/noarch/mingw64-glib2-2.66.8-1.fc33.noarch.rpm \
+    https://kojipkgs.fedoraproject.org/packages/mingw-libffi/3.1/10.fc33/noarch/mingw64-libffi-3.1-10.fc33.noarch.rpm

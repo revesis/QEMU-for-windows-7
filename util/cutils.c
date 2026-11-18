@@ -44,7 +44,7 @@
 #endif
 
 #ifdef G_OS_WIN32
-#include <pathcch.h>
+#include <shlwapi.h>
 #include <wchar.h>
 #endif
 
@@ -1162,8 +1162,8 @@ char *get_relocated_path(const char *dir)
         PWSTR wdir = g_new(WCHAR, size);
         mbsrtowcs(wdir, &src, size, &(mbstate_t){0});
 
-        PCWSTR wdir_skipped_root;
-        if (PathCchSkipRoot(wdir, &wdir_skipped_root) == S_OK) {
+        PCWSTR wdir_skipped_root = PathSkipRootW(wdir);
+        if (wdir_skipped_root != NULL) {
             char *cursor;
             size = wcsrtombs(NULL, &wdir_skipped_root, 0, &(mbstate_t){0});
             g_string_set_size(result, result->len + size);
