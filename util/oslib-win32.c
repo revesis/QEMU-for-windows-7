@@ -28,6 +28,7 @@
 
 #include "qemu/osdep.h"
 #include <windows.h>
+#include "qemu/futex.h"
 #include "qapi/error.h"
 #include "qemu/main-loop.h"
 #include "trace.h"
@@ -931,4 +932,95 @@ int qemu_ftruncate64(int fd, int64_t length)
     /* back to old position */
     SetFilePointer(h, li.LowPart, &li.HighPart, FILE_BEGIN);
     return res ? 0 : -1;
+}
+
+/*
+ * Futex support for Windows.
+ * On Windows 8+, uses WaitOnAddress / WakeByAddress dynamically.
+ * On Windows 7, falls back to SRWLOCK and CONDITION_VARIABLE.
+ */
+#define QEMU_FUTEX_HASH_SIZE 64
+static SRWLOCK qemu_futex_locks[QEMU_FUTEX_HASH_SIZE];
+static CONDITION_VARIABLE qemu_futex_conds[QEMU_FUTEX_HASH_SIZE];
+
+typedef BOOL (WINAPI *pfn_WaitOnAddress)(volatile VOID *Address, PVOID CompareAddress, SIZE_T AddressSize, DWORD dwMilliseconds);
+typedef VOID (WINAPI *pfn_WakeByAddressSingle)(PVOID Address);
+typedef VOID (WINAPI *pfn_WakeByAddressAll)(PVOID Address);
+
+static pfn_WaitOnAddress qemu_pWaitOnAddress;
+static pfn_WakeByAddressSingle qemu_pWakeByAddressSingle;
+static pfn_WakeByAddressAll qemu_pWakeByAddressAll;
+static gsize qemu_futex_init_once = 0;
+
+static void qemu_futex_init(void)
+{
+    HMODULE hKernel = GetModuleHandleA("kernel32.dll");
+    if (hKernel) {
+        qemu_pWaitOnAddress = (pfn_WaitOnAddress)GetProcAddress(hKernel, "WaitOnAddress");
+        qemu_pWakeByAddressSingle = (pfn_WakeByAddressSingle)GetProcAddress(hKernel, "WakeByAddressSingle");
+        qemu_pWakeByAddressAll = (pfn_WakeByAddressAll)GetProcAddress(hKernel, "WakeByAddressAll");
+    }
+    if (!qemu_pWaitOnAddress) {
+        HMODULE hSynch = LoadLibraryA("api-ms-win-core-synch-l1-2-0.dll");
+        if (hSynch) {
+            qemu_pWaitOnAddress = (pfn_WaitOnAddress)GetProcAddress(hSynch, "WaitOnAddress");
+            qemu_pWakeByAddressSingle = (pfn_WakeByAddressSingle)GetProcAddress(hSynch, "WakeByAddressSingle");
+            qemu_pWakeByAddressAll = (pfn_WakeByAddressAll)GetProcAddress(hSynch, "WakeByAddressAll");
+        }
+    }
+}
+
+static inline size_t qemu_futex_hash(void *f)
+{
+    return (((uintptr_t)f) >> 2) % QEMU_FUTEX_HASH_SIZE;
+}
+
+void qemu_futex_wake_all(void *f)
+{
+    if (g_once_init_enter(&qemu_futex_init_once)) {
+        qemu_futex_init();
+        g_once_init_leave(&qemu_futex_init_once, 1);
+    }
+    if (qemu_pWakeByAddressAll) {
+        qemu_pWakeByAddressAll(f);
+    } else {
+        size_t idx = qemu_futex_hash(f);
+        AcquireSRWLockExclusive(&qemu_futex_locks[idx]);
+        WakeAllConditionVariable(&qemu_futex_conds[idx]);
+        ReleaseSRWLockExclusive(&qemu_futex_locks[idx]);
+    }
+}
+
+void qemu_futex_wake_single(void *f)
+{
+    if (g_once_init_enter(&qemu_futex_init_once)) {
+        qemu_futex_init();
+        g_once_init_leave(&qemu_futex_init_once, 1);
+    }
+    if (qemu_pWakeByAddressSingle) {
+        qemu_pWakeByAddressSingle(f);
+    } else {
+        size_t idx = qemu_futex_hash(f);
+        AcquireSRWLockExclusive(&qemu_futex_locks[idx]);
+        WakeConditionVariable(&qemu_futex_conds[idx]);
+        ReleaseSRWLockExclusive(&qemu_futex_locks[idx]);
+    }
+}
+
+void qemu_futex_wait(void *f, unsigned val)
+{
+    if (g_once_init_enter(&qemu_futex_init_once)) {
+        qemu_futex_init();
+        g_once_init_leave(&qemu_futex_init_once, 1);
+    }
+    if (qemu_pWaitOnAddress) {
+        qemu_pWaitOnAddress(f, &val, sizeof(val), INFINITE);
+    } else {
+        size_t idx = qemu_futex_hash(f);
+        AcquireSRWLockExclusive(&qemu_futex_locks[idx]);
+        if (*(volatile unsigned *)f == val) {
+            SleepConditionVariableSRW(&qemu_futex_conds[idx], &qemu_futex_locks[idx], INFINITE, 0);
+        }
+        ReleaseSRWLockExclusive(&qemu_futex_locks[idx]);
+    }
 }

@@ -56,22 +56,9 @@ static inline void qemu_futex_wait(void *f, unsigned val)
     }
 }
 #elif defined(CONFIG_WIN32)
-#include <synchapi.h>
-
-static inline void qemu_futex_wake_all(void *f)
-{
-    WakeByAddressAll(f);
-}
-
-static inline void qemu_futex_wake_single(void *f)
-{
-    WakeByAddressSingle(f);
-}
-
-static inline void qemu_futex_wait(void *f, unsigned val)
-{
-    WaitOnAddress(f, &val, sizeof(val), INFINITE);
-}
+void qemu_futex_wake_all(void *f);
+void qemu_futex_wake_single(void *f);
+void qemu_futex_wait(void *f, unsigned val);
 #else
 #undef HAVE_FUTEX
 #endif
