@@ -29,8 +29,8 @@ cp -v qemu-nbd.exe /dist/ 2>/dev/null || true
 cp -v qemu-edid.exe /dist/ 2>/dev/null || true
 
 # Copy QEMU firmware/PC-BIOS ROMs (needed by qemu-system-x86_64 to boot VMs!)
-mkdir -p /dist/share/qemu
-cp -rv /opt/qemu/pc-bios /dist/share/qemu/
+mkdir -p /dist/share
+cp -rv /opt/qemu/pc-bios/* /dist/share/
 
 # Copy all required MinGW runtime DLLs into /dist
 SYSROOT="/usr/x86_64-w64-mingw32/sys-root/mingw/bin"
