@@ -25,7 +25,7 @@ util_ss.add(when: 'CONFIG_WIN32', if_true: files('event_notifier-win32.c'))
 util_ss.add(when: 'CONFIG_WIN32', if_true: files('oslib-win32.c'))
 util_ss.add(when: 'CONFIG_WIN32', if_true: files('qemu-thread-win32.c'))
 util_ss.add(when: 'CONFIG_WIN32', if_true: winmm)
-util_ss.add(when: 'CONFIG_WIN32', if_true: pathcch)
+util_ss.add(when: 'CONFIG_WIN32', if_true: shlwapi)
 if glib_has_gslice
   util_ss.add(files('qtree.c'))
 endif

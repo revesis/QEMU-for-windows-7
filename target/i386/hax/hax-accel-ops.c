@@ -39,7 +39,6 @@ static void *hax_cpu_thread_fn(void *arg)
 
     cpu->thread_id = qemu_get_thread_id();
     current_cpu = cpu;
-    hax_init_vcpu(cpu);
     cpu_thread_signal_created(cpu);
     qemu_guest_random_seed_thread_part2(cpu->random_seed);
 
@@ -66,6 +65,8 @@ static void hax_start_vcpu_thread(CPUState *cpu)
     cpu->thread = g_new0(QemuThread, 1);
     cpu->halt_cond = g_new0(QemuCond, 1);
     qemu_cond_init(cpu->halt_cond);
+
+    hax_init_vcpu(cpu);
 
     snprintf(thread_name, VCPU_THREAD_NAME_SIZE, "CPU %d/HAX",
              cpu->cpu_index);
