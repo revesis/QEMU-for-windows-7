@@ -85,6 +85,8 @@ option('nitro', type: 'feature', value: 'auto',
        description: 'Nitro acceleration support')
 option('nvmm', type: 'feature', value: 'auto',
        description: 'NVMM acceleration support')
+option('hax', type: 'feature', value: 'auto',
+       description: 'HAX acceleration support')
 option('xen', type: 'feature', value: 'auto',
        description: 'Xen backend support')
 option('xen_pci_passthrough', type: 'feature', value: 'auto',

@@ -686,6 +686,14 @@ F: include/system/nvmm.h
 F: accel/stubs/nvmm-stub.c
 F: target/i386/nvmm/
 
+Guest CPU Cores (HAXM)
+----------------------
+Intel HAXM CPU support
+S: Odd Fixes
+F: include/system/hax.h
+F: accel/stubs/hax-stub.c
+F: target/i386/hax/
+
 Hosts
 -----
 LINUX

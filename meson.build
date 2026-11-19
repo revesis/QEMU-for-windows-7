@@ -317,6 +317,7 @@ elif cpu == 'x86_64'
     'CONFIG_HVF': ['x86_64-softmmu'],
     'CONFIG_NITRO': ['x86_64-softmmu'],
     'CONFIG_NVMM': ['i386-softmmu', 'x86_64-softmmu'],
+    'CONFIG_HAX': ['i386-softmmu', 'x86_64-softmmu'],
     'CONFIG_WHPX': ['x86_64-softmmu'],
     'CONFIG_MSHV': ['x86_64-softmmu'],
   }
@@ -929,6 +930,11 @@ if host_os == 'netbsd'
   endif
 endif
 
+if get_option('hax').allowed() and cpu == 'x86_64' and \
+   (host_os == 'linux' or host_os == 'windows' or host_os == 'darwin')
+  accelerators += 'CONFIG_HAX'
+endif
+
 tcg_arch = host_arch
 if have_tcg
   if host_arch == 'unknown'
@@ -973,6 +979,9 @@ if 'CONFIG_WHPX' not in accelerators and get_option('whpx').enabled()
 endif
 if 'CONFIG_MSHV' not in accelerators and get_option('mshv').enabled()
   error('mshv not available on this platform')
+endif
+if 'CONFIG_HAX' not in accelerators and get_option('hax').enabled()
+  error('HAX not available on this platform')
 endif
 
 xen = not_found
@@ -4875,6 +4884,7 @@ if have_system
   summary_info += {'WHPX support':      config_all_accel.has_key('CONFIG_WHPX')}
   summary_info += {'NVMM support':      config_all_accel.has_key('CONFIG_NVMM')}
   summary_info += {'MSHV support':      config_all_accel.has_key('CONFIG_MSHV')}
+  summary_info += {'HAX support':       config_all_accel.has_key('CONFIG_HAX')}
   summary_info += {'Xen support':       xen.found()}
   if xen.found()
     summary_info += {'xen ctrl version':  xen.version()}
